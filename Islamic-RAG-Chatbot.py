@@ -42,8 +42,15 @@ try:
 except ImportError:
     HAS_TTS = False
 
-# Langchain imports
-from langchain_community.document_loaders import PyPDFLoader
+# Langchain imports - FIXED: make PyPDFLoader optional
+try:
+    from langchain_community.document_loaders import PyPDFLoader
+except ImportError:
+    try:
+        from langchain_community.document_loaders.pdf import PyPDFLoader
+    except ImportError:
+        PyPDFLoader = None
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -272,6 +279,9 @@ def main():
                         if HAS_PYMUPDF:
                             docs = extract_text_pymupdf(tmp_path, uploaded_file.name)
                         else:
+                            if PyPDFLoader is None:
+                                st.error('PyPDFLoader not available. Install langchain-community')
+                                st.stop()
                             loader = PyPDFLoader(tmp_path)
                             docs = loader.load()
                         
